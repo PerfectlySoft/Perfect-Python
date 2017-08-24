@@ -1,4 +1,4 @@
-# Perfect - Python [简体中文](README.zh_CN.md)
+# Perfect - Python [简体中文](README.zh_cn.md)
 
 <p align="center">
     <a href="http://perfect.org/get-involved.html" target="_blank">
