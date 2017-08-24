@@ -18,6 +18,7 @@
 //
 
 import PythonAPI
+import PerfectLib
 
 public extension String {
   public func python() -> PyObj? {
@@ -165,6 +166,7 @@ open class PyObj {
     if let p = path {
       PySys_SetPath(UnsafeMutablePointer<CChar>(mutating: p))
     }
+
     if let reference = PyImport_ImportModule(`import`) {
       ref = reference
     } else {
@@ -217,6 +219,8 @@ open class PyObj {
           _ = PyDict_SetItem(ref, k.ref, u.ref)
         }
       }
+    } else if value is PyObj, let v = value as? PyObj {
+      self.ref = v.ref
     } else {
       throw Exception.InvalidType
     }
@@ -287,7 +291,7 @@ open class PyObj {
     } else if let a = args, let tuple = try? PyObj(arguments: a)  {
       result = PyObject_CallObject(function, tuple.ref)
     } else {
-      return nil
+      result = PyObject_CallObject(function, nil)
     }
     return PyObj(result)
   }

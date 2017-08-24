@@ -23,5 +23,8 @@ let package = Package(
     targets: [
       Target(name: "PythonAPI", dependencies: []),
       Target(name: "PerfectPython", dependencies: ["PythonAPI"])
+    ],
+    dependencies: [
+      .Package(url: "https://github.com/PerfectlySoft/Perfect.git", majorVersion: 2)
     ]
 )
