@@ -21,6 +21,8 @@ import PythonAPI
 import PerfectLib
 
 public extension String {
+
+  /// convert string to PyObj
   public func python() -> PyObj? {
     if let ref = PyString_FromString(self) {
       return PyObj(ref)
@@ -28,6 +30,8 @@ public extension String {
       return nil
     }
   }
+
+  /// convert PyObj to string
   public init(python: PyObj) {
     if let p = PyString_AsString(python.ref) {
       self = String(cString: p)
@@ -38,6 +42,8 @@ public extension String {
 }
 
 public extension Int {
+
+  /// convert integer to PyObj
   public func python() -> PyObj? {
     if let ref = PyInt_FromLong(self) {
       return PyObj(ref)
@@ -45,12 +51,16 @@ public extension Int {
       return nil
     }
   }
+
+  /// convert PyObj to integer
   public init(python: PyObj) {
     self = PyInt_AsLong(python.ref)
   }
 }
 
 public extension Double {
+
+  /// convert Double to PyObj
   public func python() -> PyObj? {
     if let ref = PyFloat_FromDouble(self) {
       return PyObj(ref)
@@ -58,12 +68,16 @@ public extension Double {
       return nil
     }
   }
+  /// convert PyObj to Double
   public init(python: PyObj) {
     self = PyFloat_AsDouble(python.ref)
   }
 }
 
+/// conversion between [String] and PyObj
 public extension Array where Element == String {
+
+  /// convert [String] to PyObj
   public func python() -> PyObj? {
     if let list = PyList_New(self.count) {
       for i in 0 ..< self.count {
@@ -76,6 +90,8 @@ public extension Array where Element == String {
       return nil
     }
   }
+
+  /// convert PyObj to [String]
   public init(python: PyObj) {
     var list:[String] = []
     for i in 0 ..< PyList_Size(python.ref) {
@@ -87,7 +103,10 @@ public extension Array where Element == String {
   }
 }
 
+/// conversion between [Int] and PyObj
 public extension Array where Element == Int {
+
+  /// convert [Int] to PyObj
   public func python() -> PyObj? {
     if let list = PyList_New(self.count) {
       for i in 0 ..< self.count {
@@ -100,6 +119,8 @@ public extension Array where Element == Int {
       return nil
     }
   }
+
+  /// convert PyObj to [Int]
   public init(python: PyObj) {
     var list:[Int] = []
     for i in 0 ..< PyList_Size(python.ref) {
@@ -111,7 +132,10 @@ public extension Array where Element == Int {
   }
 }
 
+/// conversion between [Double] and PyObj
 public extension Array where Element == Double {
+
+  /// convert [Double] to PyObj
   public func python() -> PyObj? {
     if let list = PyList_New(self.count) {
       for i in 0 ..< self.count {
@@ -124,6 +148,8 @@ public extension Array where Element == Double {
       return nil
     }
   }
+
+  /// convert PyObj to [Double]
   public init(python: PyObj) {
     var list:[Double] = []
     for i in 0 ..< PyList_Size(python.ref) {
@@ -136,10 +162,15 @@ public extension Array where Element == Double {
 }
 
 
+/// conversion between [String:Any] and PyObj
 public extension Dictionary where Key == String, Value == Any {
+
+  /// convert [String:Any] to PyObj
   public func python() -> PyObj? {
     return try? PyObj(value: self as Any)
   }
+
+  /// convert PyObj to [String:Any]
   public init(python: PyObj) {
     if python.value is [String: Any], let v = python.value as? [String:Any] {
       self = v
@@ -149,19 +180,39 @@ public extension Dictionary where Key == String, Value == Any {
   }
 }
 
+/// Swift Wrapper Class of UnsafeMutablePointer<PyObject>
 open class PyObj {
+
+  /// reference pointer
   let ref: UnsafeMutablePointer<PyObject>
+
+  /// if explicitly marked autoDealloc to false, the pointer will not be released
   public var autoDealloc = true
 
+  /// Errors
   public enum Exception: Error {
+
+    /// Python module importing failure
     case ImportFailure
-    case ObjectFailure
+
+    /// Unsupported Python Type
     case InvalidType
+
+    /// The array is unexpectedly null.
     case NullArray
+
+    /// element can not be inserted
     case ElementInsertionFailure
+
+    /// variable value can not be saved into the runtime context
     case ValueSavingFailure
   }
 
+  /// Load a python module from the given path and turn the module into a PyObj
+  /// - parameters: 
+  ///   - path: String, the module directory
+  ///   - import: String, the module name without path and suffix
+  /// - throws: `Exception.ImportFailure`
   public init(path: String? = nil, `import`: String) throws {
     if let p = path {
       PySys_SetPath(UnsafeMutablePointer<CChar>(mutating: p))
@@ -174,10 +225,19 @@ open class PyObj {
     }
   }
 
+  /// Initialize a PyObj by its reference pointer
+  /// - parameters:
+  ///   - reference: UnsafeMutablePointer<PyObject>, the reference pointer
   public init(_ reference: UnsafeMutablePointer<PyObject>) {
     ref = reference
   }
 
+  /// convert a Swift array to a python tuple object
+  /// - parameters:
+  ///   - arguments: [Any], the Swift array to convert
+  /// - throws:
+  ///   - Exception.NullArray, if python tuple can not be allocated.
+  ///   - Exception.ElementInsertionFailure, if one elment of the given array can not be inserted into the objective python tuple
   public init(arguments: [Any]) throws {
     guard arguments.count > 0,
       let args = PyTuple_New(arguments.count) else {
@@ -193,6 +253,9 @@ open class PyObj {
     ref = args
   }
 
+  /// convert a Swift constant to a PyObj, currently supported types include:
+  /// Int, Float, Double, [Any], [String: Any] and PyObj itself.
+  /// - throws: `Exception.InvalidType`, if the given type is not supported.
   public init(value: Any) throws {
     if value is String, let v = value as? String {
       ref = PyString_FromString(v)
@@ -226,6 +289,9 @@ open class PyObj {
     }
   }
 
+  /// automatically convert the current PyObj to a Swift constant.
+  /// currently supported types are: str, int, float, list, dict, 
+  /// otherwise will be null.
   public var value: Any? {
     let j = ref.pointee
     let tpName = String(cString: j.ob_type.pointee.tp_name)
@@ -277,6 +343,12 @@ open class PyObj {
     return v
   }
 
+  /// call a function by its name and the given arguments, if the PyObj itself
+  /// is a module or a class instance.
+  /// - parameters: 
+  ///   - functionName: String, name of the function to call
+  ///   - args: [Any]?, the arguement array.
+  /// - returns: PyObj?
   public func call(_ functionName: String, args: [Any]? = nil) -> PyObj? {
     guard let function = PyObject_GetAttrString(ref, functionName)
       else {
@@ -296,6 +368,20 @@ open class PyObj {
     return PyObj(result)
   }
 
+  /// initialize the current python object to a class instance.
+  /// for example, suppose there is a class called "Person" and can be 
+  /// initialized with two properties: name and age. then 
+  /// ``` 
+  /// let personClass = try PyObj(path:, import:) 
+  /// ``` 
+  /// can get the class, and
+  /// ``` 
+  /// let person = personClass?.construct(["rocky", 24]) 
+  /// ```
+  /// will get the object instance.
+  /// - parameters:
+  ///   - arguements: [Any]?, optional parameters to initialize the instance.
+  /// - returns: PyObj?
   public func construct(_ arguments: [Any]? = nil) -> PyObj? {
     var args: PyObj? = nil
     if let b = arguments, let a = try? PyObj(arguments: b) {
@@ -308,6 +394,10 @@ open class PyObj {
     }
   }
 
+  /// load a variable by its name.
+  /// - parameters:
+  ///   - variableName: String, name of the variable to load
+  /// - returns: PyObj?
   public func load(_ variableName: String) -> PyObj? {
     if let reference = PyObject_GetAttrString(ref, variableName) {
       return PyObj(reference)
@@ -316,6 +406,11 @@ open class PyObj {
     }
   }
 
+  /// save a variable with a new value and by its name
+  /// - parameters:
+  ///   - variableName: String, name of the variable to save
+  ///   - newValue: new value to save
+  /// - throws: `Exception.ValueSavingFailure`
   public func save(_ variableName: String, newValue: Any) throws {
     let value = try PyObj(value: newValue)
     guard 0 == PyObject_SetAttrString(ref, variableName, value.ref) else {
