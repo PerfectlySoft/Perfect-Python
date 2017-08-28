@@ -1,1 +1,1 @@
-RUN apt-get -y install libpython2.7-dev
+RUN apt-get update -y && apt-get -y install libpython2.7-dev
