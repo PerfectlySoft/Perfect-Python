@@ -3,4 +3,5 @@
 /Packages
 /*.xcodeproj
 /*.pins
+/*.resolved
 /pyt
