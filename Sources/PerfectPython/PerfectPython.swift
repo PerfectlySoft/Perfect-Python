@@ -18,7 +18,6 @@
 //
 
 import PythonAPI
-import PerfectLib
 
 public extension String {
 
@@ -221,6 +220,7 @@ open class PyObj {
     if let reference = PyImport_ImportModule(`import`) {
       ref = reference
     } else {
+      PyErr_Print()
       throw Exception.ImportFailure
     }
   }

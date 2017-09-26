@@ -19,19 +19,19 @@
 import XCTest
 @testable import PythonAPI
 @testable import PerfectPython
-import PerfectLib
+
 
 class PerfectPythonTests: XCTestCase {
 
   func writeScript(path: String, content: String) {
-    let f = File(path)
-    do {
-      try f.open(.write)
-      try f.write(string: content)
-      f.close()
-    } catch {
-      XCTFail("script \(path) failed")
+    guard let f = fopen(path, "w") else {
+      XCTFail("\(path) is invalid")
+      return
     }
+    _ = content.withCString { pstring in
+      fwrite(pstring, 1, content.characters.count, f)
+    }
+    fclose(f)
   }
 
   override func setUp() {
@@ -289,6 +289,6 @@ class PerfectPythonTests: XCTestCase {
     ("testBasic", testBasic),
     ("testBasic2", testBasic2),
     ("testClass", testClass),
-    ("testClass2", testClass2),
+    ("testClass2", testClass2)
   ]
 }
