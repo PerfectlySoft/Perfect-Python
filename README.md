@@ -45,7 +45,7 @@ This project provides an expressway to import Python 2.7 module as a Server Side
 
 This package builds with Swift Package Manager and is part of the [Perfect](https://github.com/PerfectlySoft/Perfect) project, but can also run independently.
 
-Ensure you have installed and activated the latest Swift 3.1 / 4.0 tool chain.
+Ensure you have installed and activated the latest Swift 4.0 tool chain.
 
 ## Linux Build Note
 
@@ -57,14 +57,20 @@ $ sudo apt-get install libpython2.7-dev
 
 ## MacOS Build Note
 
-Please make sure Xcode 8.3.3 / 9.0 or later version was installed.
+Please make sure Xcode 9.0 or later version was installed.
 
 ## Quick Start
 
 Add PerfectPython dependency to your Package.swift
 
 ``` swift
-.Package(url: "https://github.com/PerfectlySoft/Perfect-Python.git", majorVersion: 1)
+.package(url: "https://github.com/PerfectlySoft/Perfect-Python.git", 
+	from: "3.0.0")
+
+// on target section:
+.target(
+            // name: "your project name",
+            dependencies: ["PerfectPython", "PythonAPI"]),
 ```
 
 Then import two different libraries into the swift source code:

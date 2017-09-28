@@ -1,3 +1,6 @@
+// swift-tools-version:4.0
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+
 //
 //  PerfectPython.swift
 //  Perfect-Python
@@ -16,12 +19,19 @@
 //
 //===----------------------------------------------------------------------===//
 //
+
 import PackageDescription
 
 let package = Package(
     name: "PerfectPython",
+    products: [
+        .library(
+            name: "PerfectPython",
+            targets: ["PerfectPython"]),
+    ],
     targets: [
-      Target(name: "PythonAPI", dependencies: []),
-      Target(name: "PerfectPython", dependencies: ["PythonAPI"])
+      .target(name: "PythonAPI", dependencies: []),
+      .target(name: "PerfectPython", dependencies: ["PythonAPI"]),
+      .testTarget(name: "PerfectPythonTests", dependencies: ["PerfectPython"])
     ]
 )
