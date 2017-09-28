@@ -58,14 +58,8 @@ class PerfectPythonTests: XCTestCase {
   }
 
   func testVersion() {
-    if let module = PyImport_ImportModule("sys"),
-      let sys = PyModule_GetDict(module),
-      let verObj = PyMapping_GetItemString(sys, UnsafeMutablePointer<Int8>(mutating: "version")),
-      let verstr = PyString_AsString(verObj),
-      let _ = strstr(verstr, "2.7") {
-      print(String(cString: verstr))
-      Py_DecRef(verObj)
-      Py_DecRef(module)
+    if let v = PyObj.Version {
+      XCTAssertTrue(v.hasPrefix("2.7"))
     } else {
       XCTFail("version checking failed")
     }

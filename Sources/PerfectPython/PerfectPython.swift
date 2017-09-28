@@ -426,4 +426,19 @@ open class PyObj {
       }
     }
   }
+
+  /// get version info 
+  public static var Version: String? {
+    if let module = PyImport_ImportModule("sys"),
+      let sys = PyModule_GetDict(module),
+      let verObj = PyMapping_GetItemString(sys, UnsafeMutablePointer<Int8>(mutating: "version")),
+      let verstr = PyString_AsString(verObj) {
+      let version = String(cString: verstr)
+      Py_DecRef(verObj)
+      Py_DecRef(module)
+      return version
+    } else {
+      return nil
+    }
+  }
 }
