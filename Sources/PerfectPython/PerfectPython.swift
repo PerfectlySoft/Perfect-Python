@@ -31,12 +31,12 @@ public extension String {
   }
 
   /// convert PyObj to string
-  public init(python: PyObj) {
-    if let p = PyString_AsString(python.ref) {
-      self = String(cString: p)
-    } else {
-      self = ""
+  public init(python: PyObj) throws {
+    guard let p = PyString_AsString(python.ref),
+       let s = String(validatingUTF8: p) else {
+      throw PyObj.Exception.InvalidString
     }
+    self = s
   }
 }
 
@@ -91,11 +91,12 @@ public extension Array where Element == String {
   }
 
   /// convert PyObj to [String]
-  public init(python: PyObj) {
+  public init(python: PyObj) throws {
     var list:[String] = []
     for i in 0 ..< PyList_Size(python.ref) {
       if let j = PyList_GetItem(python.ref, i) {
-        list.insert(String(python: PyObj(j)), at: i)
+        let s = try String(python: PyObj(j))
+        list.insert(s, at: i)
       }
     }
     self = list
@@ -180,7 +181,7 @@ public extension Dictionary where Key == String, Value == Any {
 }
 
 /// Swift Wrapper Class of UnsafeMutablePointer<PyObject>
-open class PyObj {
+public class PyObj {
 
   /// reference pointer
   let ref: UnsafeMutablePointer<PyObject>
@@ -192,7 +193,7 @@ open class PyObj {
   public enum Exception: Error {
 
     /// Python module importing failure
-    case ImportFailure
+    case ImportFailure(String)
 
     /// Unsupported Python Type
     case InvalidType
@@ -204,7 +205,39 @@ open class PyObj {
     case ElementInsertionFailure
 
     /// variable value can not be saved into the runtime context
-    case ValueSavingFailure
+    case ValueSavingFailure(String)
+
+    /// unable to convert into a string
+    case InvalidString
+  }
+
+  public static func LastError() -> String {
+    var ptype: UnsafeMutablePointer<PyObject>? = nil
+    var pvalue: UnsafeMutablePointer<PyObject>? = nil
+    var ptraceback: UnsafeMutablePointer<PyObject>? = nil
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback)
+    var m:[String:String] = ["error":"true"]
+    /* skip type object
+    if let p = ptype {
+      let q = PyObj(p)
+      if let v = q.value {
+        m["type"] = "\(v)"
+      }
+    }*/
+    if let p = pvalue {
+      let q = PyObj(p)
+      if let v = q.value {
+        m["value"] = "\(v)"
+      }
+    }
+    if let p = ptraceback {
+      let q = PyObj(p)
+      if let v = q.value {
+        m["traceback"] = "\(v)"
+      }
+    }
+    let n: [String] = m.map { "\"\($0.key)\": \"\($0.value)\"" }
+    return "{" + n.joined(separator: ",") + "}"
   }
 
   /// Load a python module from the given path and turn the module into a PyObj
@@ -220,8 +253,8 @@ open class PyObj {
     if let reference = PyImport_ImportModule(`import`) {
       ref = reference
     } else {
-      PyErr_Print()
-      throw Exception.ImportFailure
+      let err = PyObj.LastError()
+      throw Exception.ImportFailure(err)
     }
   }
 
@@ -289,14 +322,18 @@ open class PyObj {
     }
   }
 
+  /// get the type name
+  public var `type`: String {
+    return String(cString: ref.pointee.ob_type.pointee.tp_name)
+  }
+
   /// automatically convert the current PyObj to a Swift constant.
   /// currently supported types are: str, int, float, list, dict, 
   /// otherwise will be null.
   public var value: Any? {
-    let j = ref.pointee
-    let tpName = String(cString: j.ob_type.pointee.tp_name)
     let v: Any?
-    switch tpName {
+    switch self.type {
+    //case "type": - this may be useful for PyTypeObject
     case "str":
       v = String(cString: PyString_AsString(ref))
       break
@@ -414,16 +451,13 @@ open class PyObj {
   public func save(_ variableName: String, newValue: Any) throws {
     let value = try PyObj(value: newValue)
     guard 0 == PyObject_SetAttrString(ref, variableName, value.ref) else {
-      PyErr_Print()
-      throw Exception.ValueSavingFailure
+      throw Exception.ValueSavingFailure(PyObj.LastError())
     }
   }
 
   deinit {
-    defer {
-      if autoDealloc {
-        Py_DecRef(ref)
-      }
+    if autoDealloc {
+      Py_DecRef(ref)
     }
   }
 

@@ -23,6 +23,17 @@ import XCTest
 
 class PerfectPythonTests: XCTestCase {
 
+  static var allTests = [
+    ("testCallback", testCallback),
+    ("testExample", testExample),
+    ("testVersion", testVersion),
+    ("testBasic", testBasic),
+    ("testBasic2", testBasic2),
+    ("testClass", testClass),
+    ("testClass2", testClass2),
+    ("testLastError", testLastError)
+  ]
+
   func writeScript(path: String, content: String) {
     guard let f = fopen(path, "w") else {
       XCTFail("\(path) is invalid")
@@ -55,6 +66,17 @@ class PerfectPythonTests: XCTestCase {
   func testExample() {
     let p = PyObject()
     print(p)
+  }
+
+  func testLastError() {
+    do {
+      let _ = try PyObj(path: "/nowhere", import: "inexisting")
+    }catch PyObj.Exception.ImportFailure(let message) {
+      XCTAssertFalse(message.isEmpty)
+      print(message)
+    } catch {
+      XCTFail(error.localizedDescription)
+    }
   }
 
   func testVersion() {
@@ -275,14 +297,4 @@ class PerfectPythonTests: XCTestCase {
       XCTFail(error.localizedDescription)
     }
   }
-
-  static var allTests = [
-    ("testCallback", testCallback),
-    ("testExample", testExample),
-    ("testVersion", testVersion),
-    ("testBasic", testBasic),
-    ("testBasic2", testBasic2),
-    ("testClass", testClass),
-    ("testClass2", testClass2)
-  ]
 }
