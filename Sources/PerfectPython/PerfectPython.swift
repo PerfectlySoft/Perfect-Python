@@ -19,7 +19,18 @@
 
 import PythonAPI
 
-public extension String {
+/// public protocol for convertion between Python and Swift tyeps
+/// suggested by Chris Lattner, Nov 3rd, 2017
+public protocol Pythonable {
+
+  /// convert a PyObj to a Swift object, will return nil if failed
+  init?(python : PyObj)
+
+  /// convert a Swift obj to a Python object, will return nil if faied
+  func python() -> PyObj?
+}
+
+extension String: Pythonable {
 
   /// convert string to PyObj
   public func python() -> PyObj? {
@@ -31,16 +42,16 @@ public extension String {
   }
 
   /// convert PyObj to string
-  public init(python: PyObj) throws {
+  public init?(python: PyObj) {
     guard let p = PyString_AsString(python.ref),
        let s = String(validatingUTF8: p) else {
-      throw PyObj.Exception.InvalidString
+      return nil
     }
     self = s
   }
 }
 
-public extension Int {
+extension Int: Pythonable {
 
   /// convert integer to PyObj
   public func python() -> PyObj? {
@@ -52,12 +63,12 @@ public extension Int {
   }
 
   /// convert PyObj to integer
-  public init(python: PyObj) {
+  public init?(python: PyObj) {
     self = PyInt_AsLong(python.ref)
   }
 }
 
-public extension Double {
+extension Double: Pythonable {
 
   /// convert Double to PyObj
   public func python() -> PyObj? {
@@ -68,15 +79,16 @@ public extension Double {
     }
   }
   /// convert PyObj to Double
-  public init(python: PyObj) {
+  public init?(python: PyObj) {
     self = PyFloat_AsDouble(python.ref)
   }
 }
 
+
 /// conversion between [String] and PyObj
-public extension Array where Element == String {
+extension Array where Element == Pythonable {
 
-  /// convert [String] to PyObj
+  /// convert [ ] to PyObj
   public func python() -> PyObj? {
     if let list = PyList_New(self.count) {
       for i in 0 ..< self.count {
@@ -90,80 +102,23 @@ public extension Array where Element == String {
     }
   }
 
-  /// convert PyObj to [String]
-  public init(python: PyObj) throws {
-    var list:[String] = []
+  /// convert PyObj to [ ]
+  public init?(python: PyObj)  {
+    var list: [Pythonable] = []
     for i in 0 ..< PyList_Size(python.ref) {
       if let j = PyList_GetItem(python.ref, i) {
-        let s = try String(python: PyObj(j))
-        list.insert(s, at: i)
-      }
-    }
-    self = list
-  }
-}
-
-/// conversion between [Int] and PyObj
-public extension Array where Element == Int {
-
-  /// convert [Int] to PyObj
-  public func python() -> PyObj? {
-    if let list = PyList_New(self.count) {
-      for i in 0 ..< self.count {
-        if let j = self[i].python() {
-          _ = PyList_SetItem(list, i, j.ref)
+        let p = PyObj.init(j)
+        if let e = p.value as? Pythonable {
+          list.insert(e, at: i)
         }
       }
-      return PyObj(list)
-    } else {
-      return nil
-    }
-  }
-
-  /// convert PyObj to [Int]
-  public init(python: PyObj) {
-    var list:[Int] = []
-    for i in 0 ..< PyList_Size(python.ref) {
-      if let j = PyList_GetItem(python.ref, i) {
-        list.insert(Int(python: PyObj(j)), at: i)
-      }
     }
     self = list
   }
 }
-
-/// conversion between [Double] and PyObj
-public extension Array where Element == Double {
-
-  /// convert [Double] to PyObj
-  public func python() -> PyObj? {
-    if let list = PyList_New(self.count) {
-      for i in 0 ..< self.count {
-        if let j = self[i].python() {
-          _ = PyList_SetItem(list, i, j.ref)
-        }
-      }
-      return PyObj(list)
-    } else {
-      return nil
-    }
-  }
-
-  /// convert PyObj to [Double]
-  public init(python: PyObj) {
-    var list:[Double] = []
-    for i in 0 ..< PyList_Size(python.ref) {
-      if let j = PyList_GetItem(python.ref, i) {
-        list.insert(Double(python: PyObj(j)), at: i)
-      }
-    }
-    self = list
-  }
-}
-
 
 /// conversion between [String:Any] and PyObj
-public extension Dictionary where Key == String, Value == Any {
+public extension Dictionary where Key == String, Value == Pythonable {
 
   /// convert [String:Any] to PyObj
   public func python() -> PyObj? {
@@ -171,11 +126,11 @@ public extension Dictionary where Key == String, Value == Any {
   }
 
   /// convert PyObj to [String:Any]
-  public init(python: PyObj) {
-    if python.value is [String: Any], let v = python.value as? [String:Any] {
+  public init?(python: PyObj) {
+    if python.value is [String: Pythonable], let v = python.value as? [String:Pythonable] {
       self = v
     } else {
-      self = [:]
+      return nil
     }
   }
 }
