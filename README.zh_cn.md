@@ -47,6 +47,11 @@
 
 在使用之前请准备好最新的Swift 4.0 工具链
 
+## 致谢
+
+本程序部分更新来自Swift 语言之父 Chris Lattner 的建议。感谢 @Chris
+
+
 ## Linux 编译事项
 
 首先请确保 libpython2.7-dev 已经在 Ubuntu 16.04 上正确安装：
@@ -65,12 +70,12 @@ $ sudo apt-get install libpython2.7-dev
 
 ``` swift
 .package(url: "https://github.com/PerfectlySoft/Perfect-Python.git", 
-	from: "3.0.0")
+	from: "3.1.0")
 
-// on target section:
+// 注意在编译目标段落需要追加：
 .target(
-            // name: "your project name",
-            dependencies: ["PerfectPython", "PythonAPI"]),
+	// name: "your project name",
+	dependencies: ["PerfectPython", "PythonAPI"]),
 ```
 
 然后将下列头文件导入Swift源代码：

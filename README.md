@@ -47,6 +47,10 @@ This package builds with Swift Package Manager and is part of the [Perfect](http
 
 Ensure you have installed and activated the latest Swift 4.0 tool chain.
 
+## Acknowledgement
+
+A few updates were suggested by Chris Lattner. Thanks, @Chris.
+
 ## Linux Build Note
 
 Please make sure libpython2.7-dev was installed on Ubuntu 16.04:
@@ -65,12 +69,12 @@ Add PerfectPython dependency to your Package.swift
 
 ``` swift
 .package(url: "https://github.com/PerfectlySoft/Perfect-Python.git", 
-	from: "3.0.0")
+	from: "3.1.0")
 
 // on target section:
 .target(
-            // name: "your project name",
-            dependencies: ["PerfectPython", "PythonAPI"]),
+	// name: "your project name",
+	dependencies: ["PerfectPython", "PythonAPI"]),
 ```
 
 Then import two different libraries into the swift source code:
