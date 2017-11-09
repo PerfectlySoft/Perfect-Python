@@ -95,7 +95,7 @@ class PerfectPythonTests: XCTestCase {
         let name = person.load("name")?.value as? String,
         let age = person.load("age")?.value as? Int {
         print("loaded with: ", name, age)
-        let intro = person.call("intro")?.value as? String ?? "missing"
+        let intro = try person.call("intro")?.value as? String ?? "missing"
         XCTAssertEqual(name, "rocky")
         XCTAssertEqual(age, 24)
         XCTAssertNotEqual(intro, "missing")
@@ -139,7 +139,7 @@ class PerfectPythonTests: XCTestCase {
     writeScript(path: path, content: program)
     do {
       let pymod = try PyObj(path: "/tmp", import: "hola")
-      if let res = pymod.call("mymul", args: [2,3]),
+      if let res = try pymod.call("mymul", args: [2,3]),
         let ires = res.value as? Int {
         XCTAssertEqual(ires, 6)
       } else {
@@ -284,7 +284,7 @@ class PerfectPythonTests: XCTestCase {
     do {
       let pymod = try PyObj(path: "/tmp", import: "callback")
       if let funSource = pymod.load("callback") {
-        if let result = pymod.call("caller", args: ["Hello", funSource]),
+        if let result = try pymod.call("caller", args: ["Hello", funSource]),
           let v = result.value as? String {
           print("callback result:", v)
         } else {

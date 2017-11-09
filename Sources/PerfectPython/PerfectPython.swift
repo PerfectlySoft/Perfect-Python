@@ -164,6 +164,9 @@ public class PyObj {
 
     /// unable to convert into a string
     case InvalidString
+
+    /// python throws
+    case Throw(String)
   }
 
   public static func LastError() -> String {
@@ -341,7 +344,7 @@ public class PyObj {
   ///   - functionName: String, name of the function to call
   ///   - args: [Any]?, the arguement array.
   /// - returns: PyObj?
-  public func call(_ functionName: String, args: [Any]? = nil) -> PyObj? {
+  public func call(_ functionName: String, args: [Any]? = nil) throws -> PyObj? {
     guard let function = PyObject_GetAttrString(ref, functionName)
       else {
         return nil
@@ -349,7 +352,7 @@ public class PyObj {
     defer {
       Py_DecRef(function)
     }
-    let result: UnsafeMutablePointer<PyObject>
+    let result: UnsafeMutablePointer<PyObject>?
     if let a = args, a.count < 1 {
       result = PyObject_CallObject(function, nil)
     } else if let a = args, let tuple = try? PyObj(arguments: a)  {
@@ -357,7 +360,11 @@ public class PyObj {
     } else {
       result = PyObject_CallObject(function, nil)
     }
-    return PyObj(result)
+    guard let r = result else {
+      let err = PyObj.LastError()
+      throw Exception.Throw(err)
+    }
+    return PyObj(r)
   }
 
   /// initialize the current python object to a class instance.
