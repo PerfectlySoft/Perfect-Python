@@ -24,14 +24,14 @@ import XCTest
 class PerfectPythonTests: XCTestCase {
 
   static var allTests = [
+    ("testLastError", testLastError),
     ("testCallback", testCallback),
     ("testExample", testExample),
     ("testVersion", testVersion),
     ("testBasic", testBasic),
     ("testBasic2", testBasic2),
     ("testClass", testClass),
-    ("testClass2", testClass2),
-    ("testLastError", testLastError)
+    ("testClass2", testClass2)
   ]
 
   func writeScript(path: String, content: String) {
@@ -56,7 +56,7 @@ class PerfectPythonTests: XCTestCase {
   }
 
   override func tearDown() {
-    //  Py_Finalize()
+    //Py_Finalize()
     unlink("/tmp/clstest.py")
     unlink("/tmp/clstest.pyc")
     unlink("/tmp/helloworld.py")
@@ -71,9 +71,8 @@ class PerfectPythonTests: XCTestCase {
   func testLastError() {
     do {
       let _ = try PyObj(path: "/nowhere", import: "inexisting")
-    }catch PyObj.Exception.ImportFailure(let message) {
-      XCTAssertFalse(message.isEmpty)
-      print(message)
+    } catch PyObj.Exception.Throw(let msg) {
+      print("Trapped an expected error:", msg)
     } catch {
       XCTFail(error.localizedDescription)
     }

@@ -147,9 +147,6 @@ public class PyObj {
   /// Errors
   public enum Exception: Error {
 
-    /// Python module importing failure
-    case ImportFailure(String)
-
     /// Unsupported Python Type
     case InvalidType
 
@@ -159,43 +156,11 @@ public class PyObj {
     /// element can not be inserted
     case ElementInsertionFailure
 
-    /// variable value can not be saved into the runtime context
-    case ValueSavingFailure(String)
-
     /// unable to convert into a string
     case InvalidString
 
     /// python throws
     case Throw(String)
-  }
-
-  public static func LastError() -> String {
-    var ptype: UnsafeMutablePointer<PyObject>? = nil
-    var pvalue: UnsafeMutablePointer<PyObject>? = nil
-    var ptraceback: UnsafeMutablePointer<PyObject>? = nil
-    PyErr_Fetch(&ptype, &pvalue, &ptraceback)
-    var m:[String:String] = ["error":"true"]
-    /* skip type object
-    if let p = ptype {
-      let q = PyObj(p)
-      if let v = q.value {
-        m["type"] = "\(v)"
-      }
-    }*/
-    if let p = pvalue {
-      let q = PyObj(p)
-      if let v = q.value {
-        m["value"] = "\(v)"
-      }
-    }
-    if let p = ptraceback {
-      let q = PyObj(p)
-      if let v = q.value {
-        m["traceback"] = "\(v)"
-      }
-    }
-    let n: [String] = m.map { "\"\($0.key)\": \"\($0.value)\"" }
-    return "{" + n.joined(separator: ",") + "}"
   }
 
   /// Load a python module from the given path and turn the module into a PyObj
@@ -211,8 +176,7 @@ public class PyObj {
     if let reference = PyImport_ImportModule(`import`) {
       ref = reference
     } else {
-      let err = PyObj.LastError()
-      throw Exception.ImportFailure(err)
+      throw Exception.Throw(Python.LastError)
     }
   }
 
@@ -361,8 +325,7 @@ public class PyObj {
       result = PyObject_CallObject(function, nil)
     }
     guard let r = result else {
-      let err = PyObj.LastError()
-      throw Exception.Throw(err)
+      throw Exception.Throw(Python.LastError)
     }
     return PyObj(r)
   }
@@ -413,7 +376,7 @@ public class PyObj {
   public func save(_ variableName: String, newValue: Any) throws {
     let value = try PyObj(value: newValue)
     guard 0 == PyObject_SetAttrString(ref, variableName, value.ref) else {
-      throw Exception.ValueSavingFailure(PyObj.LastError())
+      throw Exception.Throw(Python.LastError)
     }
   }
 
@@ -423,18 +386,107 @@ public class PyObj {
     }
   }
 
-  /// get version info 
+  /// get version info
   public static var Version: String? {
-    if let module = PyImport_ImportModule("sys"),
-      let sys = PyModule_GetDict(module),
-      let verObj = PyMapping_GetItemString(sys, UnsafeMutablePointer<Int8>(mutating: "version")),
-      let verstr = PyString_AsString(verObj) {
-      let version = String(cString: verstr)
-      Py_DecRef(verObj)
-      Py_DecRef(module)
-      return version
+    return Python.System?._version
+  }
+}
+
+public class Python {
+
+  static var _syslib: Python? = nil
+
+  public static var System: Python? {
+    if let sys = _syslib {
+      return sys
+    } else {
+      _syslib = Python()
+      return _syslib
+    }
+  }
+
+  let _module: UnsafeMutablePointer<PyObject>
+  let _sys: UnsafeMutablePointer<PyObject>
+  let _version: String
+
+  public static var LastError: String {
+    var ptype: UnsafeMutablePointer<PyObject>? = nil
+    var pvalue: UnsafeMutablePointer<PyObject>? = nil
+    var ptraceback: UnsafeMutablePointer<PyObject>? = nil
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback)
+    guard let sys = System else {
+        return "Unknown"
+    }
+    let p = UnsafeMutablePointer<Int32>.allocate(capacity: 2)
+    defer {
+      p.deallocate(capacity: 2)
+    }
+    guard 0 == pipe(p) else { return "Error Piping Failure" }
+    let fw = p.advanced(by: 1).pointee
+    let fr = p.pointee
+    guard let fwriter = fdopen(fw, "w"),
+      let writer = PyFile_FromFile(
+        fwriter, UnsafeMutablePointer<CChar>(mutating: "stderr"),
+        UnsafeMutablePointer<CChar>(mutating: "w"), nil) else {
+      close(fw)
+      close(fr)
+      return "Pipe Pythonization Failure"
+    }
+    defer {
+      Py_DecRef(writer)
+    }
+    let stdErrKey = UnsafeMutablePointer<CChar>(mutating: "stderr")
+    guard -1 != PyMapping_SetItemString(sys._sys, stdErrKey, writer) else {
+      return "Redirecting StdErr Failure"
+    }
+    PyErr_Restore(ptype, pvalue, ptraceback)
+    PyErr_Print()
+    fclose(fwriter)
+    var bufferArray:[CChar] = []
+    let bufsize = 4096
+    let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: bufsize)
+    defer {
+      buffer.deallocate(capacity: bufsize)
+    }
+    var count = 0
+    repeat {
+      memset(buffer, 0, bufsize)
+      count = read(fr, buffer, bufsize)
+      if count > 0 {
+        let array = UnsafeBufferPointer<CChar>(start: buffer, count: count)
+        bufferArray.append(contentsOf: array)
+      }
+    } while (count > 0)
+    close(fr)
+    bufferArray.append(0)
+    return String(cString: bufferArray)
+  }
+
+  static func `get`(_ dic: UnsafeMutablePointer<PyObject>, name: String) -> String? {
+    if let obj = PyMapping_GetItemString(
+        dic, UnsafeMutablePointer<Int8>(mutating: name)),
+      let str = PyString_AsString(obj),
+      let res = String(validatingUTF8: str) {
+      Py_DecRef(obj)
+      return res
     } else {
       return nil
     }
+  }
+
+  public init?() {
+    guard let module = PyImport_ImportModule("sys"),
+      let sys = PyModule_GetDict(module),
+      let ver = Python.get(sys, name: "version")
+      else {
+        return nil
+    }
+    _module = module
+    _sys = sys
+    _version = ver
+  }
+  deinit {
+    Py_DecRef(_sys)
+    Py_DecRef(_module)
   }
 }
