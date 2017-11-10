@@ -74,7 +74,7 @@ Add PerfectPython dependency to your Package.swift
 // on target section:
 .target(
 	// name: "your project name",
-	dependencies: ["PerfectPython", "PythonAPI"]),
+	dependencies: ["PerfectPython"]),
 ```
 
 Then import two different libraries into the swift source code:
