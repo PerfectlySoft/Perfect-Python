@@ -40,7 +40,7 @@ class PerfectPythonTests: XCTestCase {
       return
     }
     _ = content.withCString { pstring in
-      fwrite(pstring, 1, content.characters.count, f)
+      fwrite(pstring, 1, content.count, f)
     }
     fclose(f)
   }
