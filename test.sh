@@ -1,3 +1,4 @@
+clear
 echo "-------------- LINUX SWIFT 4.0 ----------------"
 rm -rf .build_linux
 rm -rf Package.resolved

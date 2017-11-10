@@ -25,6 +25,7 @@ class PerfectPythonTests: XCTestCase {
 
   static var allTests = [
     ("testLastError", testLastError),
+    ("testFile", testFile),
     ("testCallback", testCallback),
     ("testExample", testExample),
     ("testVersion", testVersion),
@@ -68,6 +69,21 @@ class PerfectPythonTests: XCTestCase {
     print(p)
   }
 
+  func testFile() {
+    do {
+      let f = try PyObj.init(value: stdin)
+      if let f2 = f.value as? UnsafeMutablePointer<FILE>,
+        let g = stdin.python(),
+        let h = UnsafeMutablePointer<FILE>(python: g) {
+        XCTAssertEqual(stdin, f2)
+        XCTAssertEqual(h, f2)
+      } else {
+        XCTFail("STDOUT PYTHONIZATION FAILURE")
+      }
+    }catch {
+      XCTFail(error.localizedDescription)
+    }
+  }
   func testLastError() {
     do {
       let _ = try PyObj(path: "/nowhere", import: "inexisting")

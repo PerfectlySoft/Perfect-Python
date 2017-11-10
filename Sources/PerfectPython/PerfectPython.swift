@@ -84,6 +84,16 @@ extension Double: Pythonable {
   }
 }
 
+extension UnsafeMutablePointer where Pointee == FILE {
+
+  public func python() -> PyObj? {
+    return PyObj.init(file: self, path: "", mode: "rw")
+  }
+
+  public init?(python: PyObj) {
+    self = PyFile_AsFile(python.ref)
+  }
+}
 
 /// conversion between [String] and PyObj
 extension Array where Element == Pythonable {
@@ -208,11 +218,22 @@ public class PyObj {
     ref = args
   }
 
+  public init(file: UnsafeMutablePointer<FILE>, path: String, mode: String) {
+    ref = PyFile_FromFile(
+      file, UnsafeMutablePointer<Int8>(mutating: path),
+      UnsafeMutablePointer<Int8>(mutating: mode), nil)
+  }
+
   /// convert a Swift constant to a PyObj, currently supported types include:
-  /// Int, Float, Double, [Any], [String: Any] and PyObj itself.
+  /// FILE*, Int, Float, Double, [Any], [String: Any] and PyObj itself.
   /// - throws: `Exception.InvalidType`, if the given type is not supported.
   public init(value: Any) throws {
-    if value is String, let v = value as? String {
+    if value is UnsafeMutablePointer<FILE>,
+      let v = value as? UnsafeMutablePointer<FILE> {
+      ref = PyFile_FromFile(
+        v, UnsafeMutablePointer<Int8>(mutating: "anonymous"),
+        UnsafeMutablePointer<Int8>(mutating: "rw"), fclose)
+    }else if value is String, let v = value as? String {
       ref = PyString_FromString(v)
     } else if value is Int, let v = value as? Int {
       ref = PyInt_FromLong(v)
@@ -256,6 +277,9 @@ public class PyObj {
     let v: Any?
     switch self.type {
     //case "type": - this may be useful for PyTypeObject
+    case "file":
+      v = PyFile_AsFile(ref)
+      break
     case "str":
       v = String(cString: PyString_AsString(ref))
       break
