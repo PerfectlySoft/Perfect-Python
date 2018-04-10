@@ -23,7 +23,7 @@
 
 <p align="center">
     <a href="https://developer.apple.com/swift/" target="_blank">
-        <img src="https://img.shields.io/badge/Swift-4.0-orange.svg?style=flat" alt="Swift 4.0">
+        <img src="https://img.shields.io/badge/Swift-4.1-orange.svg?style=flat" alt="Swift 4.1">
     </a>
     <a href="https://developer.apple.com/swift/" target="_blank">
         <img src="https://img.shields.io/badge/Platforms-OS%20X%20%7C%20Linux%20-lightgray.svg?style=flat" alt="Platforms OS X | Linux">
@@ -45,7 +45,7 @@
 
 本项目采用Swift Package Manager 软件包管理器编译，是[Perfect](https://github.com/PerfectlySoft/Perfect) 项目的一部分，但是也可以独立运行
 
-在使用之前请准备好最新的Swift 4.0 工具链
+在使用之前请准备好最新的Swift 4.1 工具链
 
 ## 致谢
 
@@ -70,7 +70,7 @@ $ sudo apt-get install libpython2.7-dev
 
 ``` swift
 .package(url: "https://github.com/PerfectlySoft/Perfect-Python.git", 
-	from: "3.1.0")
+	from: "3.2.0")
 
 // 注意在编译目标段落需要追加：
 .target(
@@ -216,13 +216,6 @@ if let fun = pymod.load("callback"),
 }
 ```
 
-## 问题报告、内容贡献和客户支持
-
-我们目前正在过渡到使用JIRA来处理所有源代码资源合并申请、修复漏洞以及其它有关问题。因此，GitHub 的“issues”问题报告功能已经被禁用了。
-
-如果您发现了问题，或者希望为改进本文提供意见和建议，[请在这里指出](http://jira.perfect.org:8080/servicedesk/customer/portal/1).
-
-在您开始之前，请参阅[目前待解决的问题清单](http://jira.perfect.org:8080/projects/ISS/issues).
 
 ## 更多信息
 关于本项目更多内容，请参考[perfect.org](http://perfect.org).

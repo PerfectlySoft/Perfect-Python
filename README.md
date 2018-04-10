@@ -23,7 +23,7 @@
 
 <p align="center">
     <a href="https://developer.apple.com/swift/" target="_blank">
-        <img src="https://img.shields.io/badge/Swift-4.0-orange.svg?style=flat" alt="Swift 4.0">
+        <img src="https://img.shields.io/badge/Swift-4.1-orange.svg?style=flat" alt="Swift 4.1">
     </a>
     <a href="https://developer.apple.com/swift/" target="_blank">
         <img src="https://img.shields.io/badge/Platforms-OS%20X%20%7C%20Linux%20-lightgray.svg?style=flat" alt="Platforms OS X | Linux">
@@ -45,7 +45,7 @@ This project provides an expressway to import Python 2.7 module as a Server Side
 
 This package builds with Swift Package Manager and is part of the [Perfect](https://github.com/PerfectlySoft/Perfect) project, but can also run independently.
 
-Ensure you have installed and activated the latest Swift 4.0 tool chain.
+Ensure you have installed and activated the latest Swift 4.1 tool chain.
 
 ## Acknowledgement
 
@@ -69,7 +69,7 @@ Add PerfectPython dependency to your Package.swift
 
 ``` swift
 .package(url: "https://github.com/PerfectlySoft/Perfect-Python.git", 
-	from: "3.1.0")
+	from: "3.2.0")
 
 // on target section:
 .target(
