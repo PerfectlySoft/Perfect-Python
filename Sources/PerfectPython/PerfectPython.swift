@@ -443,7 +443,11 @@ public class Python {
     }
     let p = UnsafeMutablePointer<Int32>.allocate(capacity: 2)
     defer {
+      #if swift(>=4.1)
+      p.deallocate()
+      #else
       p.deallocate(capacity: 2)
+      #endif
     }
     guard 0 == pipe(p) else { return "Error Piping Failure" }
     let fw = p.advanced(by: 1).pointee
@@ -470,7 +474,11 @@ public class Python {
     let bufsize = 4096
     let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: bufsize)
     defer {
+      #if swift(>=4.1)
+      buffer.deallocate()
+      #else
       buffer.deallocate(capacity: bufsize)
+      #endif
     }
     var count = 0
     repeat {
