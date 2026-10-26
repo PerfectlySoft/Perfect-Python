@@ -1,5 +1,12 @@
 # Perfect - Python [简体中文](README.zh_cn.md)
 
+> [!NOTE]
+> **Historical project, archived.** Perfect-Python bridged Python 2.7 modules into Swift 4. Python 2.7 reached end of
+> life on January 1, 2020, and this package was never ported to Python 3. The repository is kept read-only as a
+> reference. It isn't part of the modern Perfect stack ([Perfect-NIO](https://github.com/PerfectlySoft/Perfect-NIO)
+> and the packages around it), and there are no plans to revive it. For Python 3 interop from Swift today, look at
+> a maintained bridge such as [PythonKit](https://github.com/pvieito/PythonKit).
+
 <p align="center">
     <a href="http://perfect.org/get-involved.html" target="_blank">
         <img src="http://perfect.org/assets/github/perfect_github_2_0_0.jpg" alt="Get Involed with Perfect!" width="854" />

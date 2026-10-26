@@ -1,5 +1,9 @@
 # Perfect - Python
 
+> [!NOTE]
+> **历史项目，已归档。** Perfect-Python 将 Python 2.7 模块桥接到 Swift 4。Python 2.7 已于 2020 年 1 月 1 日停止维护，
+> 本项目从未移植到 Python 3。本仓库保留为只读参考，不属于现代 Perfect 技术栈，也没有恢复计划。
+
 <p align="center">
     <a href="http://perfect.org/get-involved.html" target="_blank">
         <img src="http://perfect.org/assets/github/perfect_github_2_0_0.jpg" alt="Get Involed with Perfect!" width="854" />
